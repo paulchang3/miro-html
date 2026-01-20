@@ -1,37 +1,574 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <title>Regulatory Waterfall</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 40px auto;
-      padding: 20px;
-    }
-    section {
-      margin-bottom: 60px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class IIa Clinical Investigation Decision Tree</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 40px;
+            font-size: 18px;
+        }
+        
+        .tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+        
+        .node {
+            background: white;
+            border: 3px solid #4299e1;
+            border-radius: 15px;
+            padding: 25px;
+            min-width: 350px;
+            max-width: 800px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .node:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .node-start {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .node-decision {
+            background: #edf2f7;
+            border-color: #4299e1;
+        }
+        
+        .node-action {
+            background: #fff5f5;
+            border-color: #fc8181;
+        }
+        
+        .node-success {
+            background: #f0fff4;
+            border-color: #48bb78;
+        }
+        
+        .node-warning {
+            background: #fffaf0;
+            border-color: #ed8936;
+        }
+        
+        .node-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #2d3748;
+        }
+        
+        .node-start .node-title {
+            color: white;
+        }
+        
+        .node-content {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #4a5568;
+        }
+        
+        .node-start .node-content {
+            color: rgba(255,255,255,0.95);
+        }
+        
+        .reference {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(66, 153, 225, 0.1);
+            border-left: 4px solid #4299e1;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #2c5282;
+        }
+        
+        .node-start .reference {
+            background: rgba(255,255,255,0.2);
+            border-left-color: white;
+            color: white;
+        }
+        
+        .branch-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+        
+        .arrow {
+            text-align: center;
+            font-size: 30px;
+            color: #4299e1;
+            margin: 10px 0;
+        }
+        
+        .arrow-split {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        .arrow-label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-top: 5px;
+        }
+        
+        .yes-path {
+            color: #48bb78;
+        }
+        
+        .no-path {
+            color: #fc8181;
+        }
+        
+        .example-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e6fffa;
+            border-left: 4px solid #38b2ac;
+            border-radius: 5px;
+        }
+        
+        .example-title {
+            font-weight: bold;
+            color: #234e52;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .example-content {
+            font-size: 13px;
+            color: #2c7a7b;
+            line-height: 1.5;
+        }
+        
+        .criteria-list {
+            margin-top: 10px;
+            padding-left: 20px;
+        }
+        
+        .criteria-list li {
+            margin: 5px 0;
+            font-size: 13px;
+        }
+        
+        .check {
+            color: #48bb78;
+            font-weight: bold;
+        }
+        
+        .cross {
+            color: #fc8181;
+            font-weight: bold;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 40px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .legend-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            border: 2px solid;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 22px;
+            }
+            
+            .subtitle {
+                font-size: 16px;
+            }
+            
+            .node {
+                min-width: 280px;
+                padding: 20px;
+            }
+            
+            .branch-container {
+                gap: 20px;
+            }
+            
+            .legend {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <section>
-      <h2>ISO 13485 – Clause 7</h2>
-      <p>對應 MDR Annex I Chapter II</p>
-    </section>
-
-    <section>
-      <h2>MDR Annex III</h2>
-      <p>PSUR / PMS linkage…</p>
-    </section>
-
-    <!-- 想多長就多長，真的不會截 -->
-  </div>
+    <div class="container">
+        <h1>Class IIa 器材臨床試驗需求</h1>
+        <div class="subtitle">Class IIa Medical Device Clinical Investigation Requirement Decision Tree</div>
+        
+        <div class="tree">
+            <!-- Start Node -->
+            <div class="node node-start">
+                <div class="node-title">起點：Class IIa 器材臨床評估<br>Starting Point: Class IIa Device Clinical Evaluation</div>
+                <div class="node-content">
+                    所有 Class IIa 器材都需要臨床評估，但不一定需要臨床試驗<br>
+                    All Class IIa devices require clinical evaluation, but not necessarily clinical investigation
+                </div>
+                <div class="reference">
+                    📋 MDR Article 61(1): 確認符合 GSPR 必須基於臨床資料<br>
+                    📋 MDR Article 61(3): 臨床評估應基於文獻和/或臨床試驗資料
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <!-- Step 1 -->
+            <div class="node node-decision">
+                <div class="node-title">步驟 1：評估現有臨床資料充分性<br>Step 1: Assess Sufficiency of Existing Clinical Data</div>
+                <div class="node-content">
+                    評估現有資料是否涵蓋：<br>
+                    Assess if existing data covers:<br>
+                    <ul class="criteria-list">
+                        <li>✓ 所有適應症和使用條件 (All indications and conditions of use)</li>
+                        <li>✓ 所有目標患者族群 (All target patient populations)</li>
+                        <li>✓ 所有器材變體和型號 (All device variants and models)</li>
+                        <li>✓ 資料具有科學有效性 (Data has scientific validity)</li>
+                        <li>✓ 符合最先進技術 (Compliance with state of the art)</li>
+                    </ul>
+                </div>
+                <div class="reference">
+                    📋 MDCG 2020-6 Section 5: 足夠臨床證據的評估<br>
+                    📋 MEDDEV 2.7/1 Rev.4 Appendix A2: 資料充分性標準
+                </div>
+            </div>
+            
+            <div class="arrow-split">
+                <div>
+                    <div class="arrow yes-path">↓</div>
+                    <div class="arrow-label yes-path">是 YES<br>資料充分</div>
+                </div>
+                <div>
+                    <div class="arrow no-path">↓</div>
+                    <div class="arrow-label no-path">否 NO<br>資料缺口</div>
+                </div>
+            </div>
+            
+            <div class="branch-container">
+                <!-- YES Path -->
+                <div style="flex: 1; min-width: 350px;">
+                    <div class="node node-decision">
+                        <div class="node-title">步驟 2A：新技術判定<br>Step 2A: New Technology Determination</div>
+                        <div class="node-content">
+                            是否為成熟技術 (Well-established Technology)？<br>
+                            <ul class="criteria-list">
+                                <li><span class="check">✓</span> 相對簡單、常見、穩定的設計 (Simple, common, stable design)</li>
+                                <li><span class="check">✓</span> 已知安全，無安全問題歷史 (Known safe, no safety issues)</li>
+                                <li><span class="check">✓</span> 已知臨床性能，為標準治療 (Known performance, standard of care)</li>
+                            </ul>
+                        </div>
+                        <div class="reference">
+                            📋 MDCG 2020-6 Section 1.2: Well-established Technology 定義<br>
+                            📋 MDCG 2020-13 Section C: 創新特性評估
+                        </div>
+                        <div class="example-box">
+                            <div class="example-title">✅ 範例：無線傳輸手持式超音波影像系統<br>Example: Wireless Handheld Ultrasound Imaging System</div>
+                            <div class="example-content">
+                                <strong>為何符合成熟技術標準：</strong><br>
+                                <span class="check">✓</span> 超音波成像技術已使用超過 40 年，設計原理成熟穩定<br>
+                                <span class="check">✓</span> 超音波器材組安全性已充分證實，無重大安全問題歷史<br>
+                                <span class="check">✓</span> 超音波診斷為臨床標準工具，性能特性已知且廣泛應用<br>
+                                <span class="check">✓</span> 無線傳輸僅為數據傳輸方式改變，核心成像技術未變<br>
+                                <span class="check">✓</span> 手持式設計為尺寸小型化，非新操作原理<br>
+                                <strong>結論：</strong>可視為成熟技術，現有超音波文獻充足
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- NO Path -->
+                <div style="flex: 1; min-width: 350px;">
+                    <div class="node node-action">
+                        <div class="node-title">⚠️ 發現資料缺口<br>⚠️ Data Gap Identified</div>
+                        <div class="node-content">
+                            關鍵資料缺失，需要採取行動：<br>
+                            Critical data missing, action required:<br>
+                            <ul class="criteria-list">
+                                <li><span class="cross">✗</span> 關鍵安全性或性能資料不足</li>
+                                <li><span class="cross">✗</span> 文獻品質不符合要求</li>
+                                <li><span class="cross">✗</span> 特定族群或適應症無資料</li>
+                            </ul>
+                            <br>
+                            <strong>建議行動：</strong><br>
+                            → 執行臨床試驗填補資料缺口<br>
+                            → 或規劃強化的 PMCF 研究
+                        </div>
+                        <div class="reference">
+                            📋 MEDDEV 2.7/1 Rev.4 Appendix A2: 資料缺口需臨床試驗<br>
+                            📋 MDCG 2020-7: PMCF 研究作為替代方案
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <!-- Step 2B -->
+            <div class="node node-decision">
+                <div class="node-title">步驟 2B：新材料判定<br>Step 2B: New Material Determination</div>
+                <div class="node-content">
+                    材料評估 (Material Assessment)：<br>
+                    <ul class="criteria-list">
+                        <li><span class="check">✓</span> 與同類器材使用相同材料？ (Same materials as similar devices?)</li>
+                        <li><span class="check">✓</span> 組織接觸類型相同？ (Same tissue contact type?)</li>
+                        <li><span class="check">✓</span> 接觸持續時間類別相同？ (Same contact duration category?)</li>
+                        <li><span class="check">✓</span> 有充分生物相容性資料？ (Sufficient biocompatibility data?)</li>
+                    </ul>
+                </div>
+                <div class="reference">
+                    📋 MDCG 2020-5 Section 4.2: 生物特性比較<br>
+                    📋 MDR Annex XIV Section 3(b): 同等性的生物特性要求
+                </div>
+            </div>
+            
+            <div class="arrow-split">
+                <div>
+                    <div class="arrow yes-path">↓</div>
+                    <div class="arrow-label yes-path">是 YES<br>既有材料</div>
+                </div>
+                <div>
+                    <div class="arrow no-path">→</div>
+                    <div class="arrow-label no-path">否 NO<br>新材料</div>
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <!-- Step 2C -->
+            <div class="node node-decision">
+                <div class="node-title">步驟 2C：新適應症判定<br>Step 2C: New Indication Determination</div>
+                <div class="node-content">
+                    適應症評估 (Indication Assessment)：<br>
+                    <ul class="criteria-list">
+                        <li><span class="check">✓</span> 用於相同臨床狀況？ (Same clinical condition?)</li>
+                        <li><span class="check">✓</span> 相同疾病階段和嚴重程度？ (Same disease stage and severity?)</li>
+                        <li><span class="check">✓</span> 相同患者族群？ (Same patient population?)</li>
+                        <li><span class="check">✓</span> 非擴展用途？ (Not extended use?)</li>
+                    </ul>
+                </div>
+                <div class="reference">
+                    📋 MDCG 2020-6 Section 1.2: Indication 定義<br>
+                    📋 MDCG 2020-13 Section C: 新適應症評估要求
+                </div>
+            </div>
+            
+            <div class="arrow-split">
+                <div>
+                    <div class="arrow yes-path">↓</div>
+                    <div class="arrow-label yes-path">是 YES<br>既有適應症</div>
+                </div>
+                <div>
+                    <div class="arrow no-path">→</div>
+                    <div class="arrow-label no-path">否 NO<br>新適應症</div>
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <!-- Step 3: Equivalence -->
+            <div class="node node-warning">
+                <div class="node-title">步驟 3：同等性評估 (針對新技術/新材料/新適應症)<br>Step 3: Equivalence Assessment (for New Tech/Material/Indication)</div>
+                <div class="node-content">
+                    能否證明與已知器材的同等性？<br>
+                    Can equivalence with known device be demonstrated?<br>
+                    <br>
+                    <strong>必須滿足所有三項特性 (Must satisfy ALL three characteristics)：</strong><br>
+                    <ul class="criteria-list">
+                        <li><strong>技術特性 (Technical):</strong> 相同設計、規格、材料、操作原理</li>
+                        <li><strong>生物特性 (Biological):</strong> 相同組織接觸、接觸持續時間</li>
+                        <li><strong>臨床特性 (Clinical):</strong> 相同臨床狀況、患者族群、使用環境</li>
+                    </ul>
+                </div>
+                <div class="reference">
+                    📋 MDCG 2020-5: 同等性評估完整指引<br>
+                    📋 MDR Annex XIV Section 3: 同等性判定標準<br>
+                    📋 MEDDEV 2.7/1 Rev.4 Appendix A1: 同等性詳細要求
+                </div>
+            </div>
+            
+            <div class="arrow-split">
+                <div>
+                    <div class="arrow yes-path">↓</div>
+                    <div class="arrow-label yes-path">是 YES<br>可建立同等性</div>
+                </div>
+                <div>
+                    <div class="arrow no-path">→</div>
+                    <div class="arrow-label no-path">否 NO<br>無法同等</div>
+                </div>
+            </div>
+            
+            <div class="branch-container">
+                <!-- YES Path - Step 4 -->
+                <div style="flex: 1; min-width: 350px;">
+                    <div class="node node-decision">
+                        <div class="node-title">步驟 4：文獻資料品質和相關性評估<br>Step 4: Literature Quality & Relevance Assessment</div>
+                        <div class="node-content">
+                            文獻證據評估 (Literature Evidence Assessment)：<br>
+                            <ul class="criteria-list">
+                                <li>證據等級是否足夠？ (Evidence level sufficient?)<br>
+                                <small>RCT > 世代研究 > 病例對照 > 病例系列</small></li>
+                                <li>文獻品質是否合格？ (Literature quality acceptable?)</li>
+                                <li>樣本量是否充足？ (Sample size adequate?)</li>
+                                <li>與評估器材的相關性？ (Relevance to device?)</li>
+                            </ul>
+                        </div>
+                        <div class="reference">
+                            📋 MDCG 2020-6 Appendix III: 證據層級建議<br>
+                            📋 MDCG 2020-13: 文獻評估方法學<br>
+                            📋 MEDDEV 2.7/1 Rev.4 Section A7: 文獻評估標準
+                        </div>
+                    </div>
+                    
+                    <div class="arrow-split">
+                        <div>
+                            <div class="arrow yes-path">↓</div>
+                            <div class="arrow-label yes-path">文獻充足</div>
+                        </div>
+                        <div>
+                            <div class="arrow no-path">↓</div>
+                            <div class="arrow-label no-path">文獻不足</div>
+                        </div>
+                    </div>
+                    
+                    <div class="node node-success">
+                        <div class="node-title">✅ 結論：可依賴文獻，不需臨床試驗<br>✅ Conclusion: Can Rely on Literature, No Clinical Investigation Needed</div>
+                        <div class="node-content">
+                            現有文獻資料充足，可完成臨床評估<br>
+                            Existing literature data is sufficient to complete clinical evaluation<br>
+                            <br>
+                            <strong>下一步行動：</strong><br>
+                            → 完成臨床評估報告 (CER)<br>
+                            → 建立 PMCF 計畫持續收集資料<br>
+                            → 定期更新臨床評估
+                        </div>
+                        <div class="reference">
+                            📋 MDR Article 61(3)(a): 文獻批判性評估<br>
+                            📋 MDR Annex XIV Part B: PMCF 要求<br>
+                            📋 MDCG 2020-7: PMCF 計畫模板
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- NO Path - Clinical Investigation Required -->
+                <div style="flex: 1; min-width: 350px;">
+                    <div class="node node-action">
+                        <div class="node-title">❌ 結論：需要臨床試驗<br>❌ Conclusion: Clinical Investigation Required</div>
+                        <div class="node-content">
+                            以下任一情況需要臨床試驗：<br>
+                            Clinical investigation required in any of following cases:<br>
+                            <ul class="criteria-list">
+                                <li><span class="cross">✗</span> 新技術且無法建立同等性</li>
+                                <li><span class="cross">✗</span> 新材料且缺乏安全性資料</li>
+                                <li><span class="cross">✗</span> 新適應症且文獻不涵蓋</li>
+                                <li><span class="cross">✗</span> 關鍵資料缺口</li>
+                                <li><span class="cross">✗</span> 文獻品質或相關性不足</li>
+                            </ul>
+                            <br>
+                            <strong>替代方案：</strong><br>
+                            → 強化的 PMCF 前瞻性研究<br>
+                            (須符合類似臨床試驗品質要求)
+                        </div>
+                        <div class="reference">
+                            📋 MEDDEV 2.7/1 Rev.4 Appendix A2: 需臨床試驗的情況<br>
+                            📋 MDR Article 61(3)(b): 臨床試驗評估<br>
+                            📋 MDCG 2020-7 Section 8: PMCF 研究要求
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-color: #667eea;"></div>
+                <span>起點 Start</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #edf2f7; border-color: #4299e1;"></div>
+                <span> Decision</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #f0fff4; border-color: #48bb78;"></div>
+                <span>通過 Pass</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #fffaf0; border-color: #ed8936;"></div>
+                <span>評估 Assessment</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #fff5f5; border-color: #fc8181;"></div>
+                <span>需行動 Action Required</span>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
